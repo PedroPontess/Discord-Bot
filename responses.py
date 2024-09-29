@@ -1,7 +1,9 @@
-def get_response(user_input) -> str:
-    lowered = user_input.lower()
+def get_response(user_message: str) -> str:
+    user_message = user_message.lower()
 
-    if lowered == '':
-        return "You don't tlak much do you?"
+    if user_message == "hello":
+        return "Hello! How can I assist you?"
+    elif user_message == "help":
+        return "Sure! Here's what I can do: Type 'hello' to greet me or 'help' to see this message."
     else:
-        return f'You said {user_input}'
+        return "Sorry, I didn't understand that. Type 'help' for available commands."
