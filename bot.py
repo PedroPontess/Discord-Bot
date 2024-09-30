@@ -1,11 +1,15 @@
 import discord
 from discord import Intents
 from responses import get_response
+from discord.ext import commands
 
 intents = Intents.default()
 intents.message_content = True
+intents.guilds = True
+intents.members = True
+#client = discord.Client(intents=intents)
 
-client = discord.Client(intents=intents)
+bot = commands.Bot(command_prefix="!", intents = intents)
 
 async def send_message(message, user_message: str) -> None:
     if not user_message:
@@ -25,14 +29,13 @@ async def send_message(message, user_message: str) -> None:
     except Exception as e:
         print(f"Error sending message: {e}")
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'{client.user} is active and connected!')
+    print(f'{bot.user} is active and connected!')
 
-# When a message is sent in a channel
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == bot.user:
         return
 
     username = str(message.author)
@@ -40,5 +43,69 @@ async def on_message(message):
     channel = str(message.channel)
 
     print(f'[{channel}] {username}: "{user_message}"')  
-    await send_message(message, user_message) 
+    await send_message(message, user_message)
 
+    await bot.process_commands(message)
+
+### MODERATION COMMANDS ###
+@bot.command(name='kick')
+@commands.has_permissions(kick_members=True)
+async def kick(ctx, member: discord.Member, *, reason=None):
+    """Kick a member from the server."""
+    await member.kick(reason=reason)
+    await ctx.send(f'{member.name} has been kicked for: {reason}')
+
+
+@bot.command(name='ban')
+@commands.has_permissions(ban_members=True)
+async def ban(ctx, member: discord.Member, *, reason=None):
+    """Ban a member from the server."""
+    await member.ban(reason=reason)
+    await ctx.send(f'{member.name} has been banned for: {reason}')
+
+
+@bot.command(name='unban')
+@commands.has_permissions(ban_members=True)
+async def unban(ctx, *, member: str):
+    """Unban a user from the server by their unique username"""
+    banned_users = await ctx.guild.bans()
+
+    for ban_entry in banned_users:
+        user = ban_entry.user
+        if user.name == member.lower():
+            await ctx.guild.unban(user)
+            await ctx.send(f'{user.name} has been unbanned.')
+            return
+    await ctx.send(f'User {member} was not found in the ban list.')
+
+
+@bot.command(name='mute')
+@commands.has_permissions(manage_roles=True)
+async def mute(ctx, member: discord.Member, *, reason=None):
+    """Muted a member by adding a 'Muted' role.."""
+    mute_role = discord.utils.get(ctx.guild.roles, name='Muted')
+
+    if not mute_role:
+        mute_role = await ctx.guild.create_role(name='Muted')
+
+        for channel in ctx.guild.channels:
+            await channel.set_permissions(mute_role, speak=False, send_messages=False)
+    await member.add_roles(mute_role, reason=reason)
+    await ctx.send(f'{member.mention} has been muted for: {reason}')
+
+
+@bot.command(name='unmute')
+@commands.has_permissions(manage_roles=True)
+async def unmute(ctx, member: discord.Member):
+    """Unmute a member by removing the 'Muted' role."""
+    mute_role = discord.utils.get(ctx.guild.roles, name='Muted')
+    await member.remove_roles(mute_role)
+    await ctx.send(f'{member.mention} has been unmuted.')
+
+@bot.event
+async def on_command_error(ctx, error):
+    """Handles missing permissions or other command errors."""
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You don't have the required permissions to run this command.")
+    else:
+        raise error
