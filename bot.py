@@ -1,7 +1,9 @@
 import discord
 from discord import Intents
-from responses import get_response
+from responses import get_response, client, get_chatGPT_response
 from discord.ext import commands
+import openai
+
 
 intents = Intents.default()
 intents.message_content = True
@@ -108,6 +110,34 @@ async def unmute(ctx, member: discord.Member):
     mute_role = discord.utils.get(ctx.guild.roles, name='Muted')
     await member.remove_roles(mute_role)
     await ctx.send(f'{member.mention} has been unmuted.')
+
+
+@bot.command(name='ask')
+async def ask_chatGPT(ctx, *,message):
+    """Ask ChatGPT a question and get a response"""
+    #user_message = str(message.content)
+    try:
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": message
+                }
+            ],
+            model="gpt-3.5-turbo"
+        )
+    #return str(response)
+        await ctx.send(response.choices[0])
+    
+    except openai.RateLimitError as e:
+        # Handle the rate limit error
+        await ctx.send("I'm currently out of API quota. Please try again later or check with the admin.")
+    
+    except Exception as e:
+        # Handle any other errors
+        await ctx.send(f"An error occurred: {str(e)}")
+ 
+
 
 @bot.event
 async def on_command_error(ctx, error):
