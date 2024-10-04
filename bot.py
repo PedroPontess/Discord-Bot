@@ -42,8 +42,9 @@ async def on_message(message):
     user_message = str(message.content)
     channel = str(message.channel)
 
-    print(f'[{channel}] {username}: "{user_message}"')  
-    await send_message(message, user_message)
+    print(f'[{channel}] {username}: "{user_message}"')
+    if not user_message.startswith("!"):
+        await send_message(message, user_message)
 
     await bot.process_commands(message)
 
@@ -66,13 +67,15 @@ async def ban(ctx, member: discord.Member, *, reason=None):
 
 @bot.command(name='unban')
 @commands.has_permissions(ban_members=True)
-async def unban(ctx, *, member: str):
+async def unban(ctx, *, member: int):
     """Unban a user from the server by their unique username"""
-    banned_users = await ctx.guild.bans()
+    banned_users =ctx.guild.bans()
 
-    for ban_entry in banned_users:
+    async for ban_entry in banned_users:
         user = ban_entry.user
-        if user.name == member.lower():
+        if (user.id):
+            print(user.id)
+        if user.id == member:
             await ctx.guild.unban(user)
             await ctx.send(f'{user.name} has been unbanned.')
             return
@@ -83,13 +86,17 @@ async def unban(ctx, *, member: str):
 @commands.has_permissions(manage_roles=True)
 async def mute(ctx, member: discord.Member, *, reason=None):
     """Muted a member by adding a 'Muted' role.."""
+    
     mute_role = discord.utils.get(ctx.guild.roles, name='Muted')
 
     if not mute_role:
         mute_role = await ctx.guild.create_role(name='Muted')
 
         for channel in ctx.guild.channels:
-            await channel.set_permissions(mute_role, speak=False, send_messages=False)
+            if isinstance(channel, discord.TextChannel):
+                await channel.set_permissions(mute_role, send_messages=False)
+            if isinstance(channel, discord.VoiceChannel):
+                await channel.set_permissions(mute_role, speak=False)
     await member.add_roles(mute_role, reason=reason)
     await ctx.send(f'{member.mention} has been muted for: {reason}')
 
