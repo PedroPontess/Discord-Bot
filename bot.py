@@ -124,7 +124,7 @@ async def ask_chatGPT(ctx, *,message):
                     "content": message
                 }
             ],
-            model="gpt-3.5-turbo"
+            model="gpt-4o-mini"
         )
     #return str(response)
         await ctx.send(response.choices[0])
