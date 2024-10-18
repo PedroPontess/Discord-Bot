@@ -1,4 +1,4 @@
-# ![Discord Icon](https://img.icons8.com/color/48/000000/discord-logo.png) Discord Bot with ![OpenAI Icon](https://i.imgur.com/tw9rjig.png) GPT Integration
+# ![Discord Icon](https://img.icons8.com/color/48/000000/discord-logo.png) Discord Bot with ![OpenAI Icon](http://www.w3.org/2000/svg) GPT Integration
 
 ## Description
 
