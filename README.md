@@ -24,6 +24,7 @@ This project is a Discord bot built using Python and the `discord.py` library. T
 You can install these with:
 ```bash
 pip install -r requirements.txt
+```
 
 ## Setup
 
